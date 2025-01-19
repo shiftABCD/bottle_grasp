@@ -20,6 +20,7 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
+            "Grasp_demo_pub_node = bottle_grasp.main_grasp:main",
         ],
     },
 )
