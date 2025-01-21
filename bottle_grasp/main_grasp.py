@@ -1,3 +1,5 @@
+
+
 #!/usr/bin/env python3
 
 import rclpy
@@ -23,7 +25,8 @@ class GraspDemoPub(Node):
         self.above_object_state = False
         self.correct_angle_state = False
         self.close_to_object_state = False
-        self.move_away_state = False
+        self.move_away_state1 = False
+        self.move_away_state2 = False
         self.close_jaw_state = False
         self.open_jaw_state = False
         self.movejp1 = False
@@ -31,6 +34,8 @@ class GraspDemoPub(Node):
         self.movejp3 = False
         self.movejp4 = False
         self.movejp5 = False
+        self.movejp6 = False
+        self.num = 0
 
         # 初始化机械臂状态
         self.current_arm_state = [0.0] * 6
@@ -99,8 +104,15 @@ class GraspDemoPub(Node):
             else:
                 self.get_logger().error("*******Movej_p Failed\n")
         if self.movejp5:
-            self.move_away_state = msg.data
+            self.move_away_state1 = msg.data
             self.movejp5 = False
+            if msg.data:
+                self.get_logger().info("*******Movej_p succeeded\n")
+            else:
+                self.get_logger().error("*******Movej_p Failed\n")
+        if self.movejp6:
+            self.move_away_state2 = msg.data
+            self.movejp6 = False
             if msg.data:
                 self.get_logger().info("*******Movej_p succeeded\n")
             else:
@@ -139,7 +151,7 @@ class GraspDemoPub(Node):
             movej_p_target1.pose.orientation.y = 0.0
             movej_p_target1.pose.orientation.z = 0.0
             movej_p_target1.pose.orientation.w = 0.0
-            movej_p_target1.speed = 5
+            movej_p_target1.speed = 10
             movej_p_target1.block = True
             self.movej_p_publisher_.publish(movej_p_target1)
             
@@ -161,11 +173,19 @@ class GraspDemoPub(Node):
 
         if self.saveimg_state:  # Step3: 获取目标物 mask 并计算位置
             self.get_logger().info("Step3: 获取目标物 mask 并计算位置")
-            # masks = get_mask('/home/hhh/learning_space/ros2_workspaces/ros2_ws/src/bottle_grasp/bottle_grasp/images', 'bottle')
-            _,mask = image_processor('/home/hhh/learning_space/ros2_workspaces/ros2_ws/src/bottle_grasp/bottle_grasp/images/realsense_color_image.png')
-            mask_array = np.array(mask)
-            # mask_array = np.array(masks[0][0])
-            # mask_array = (mask_array * 255).astype(np.uint8)
+            if(self.num == 0):
+                _,mask_array = image_processor('/home/hhh/learning_space/ros2_workspaces/ros2_ws/src/bottle_grasp/bottle_grasp/images/realsense_color_image.png')
+                mask_array = np.array(mask_array)
+            if(self.num == 1):
+                _,mask_array = image_processor('/home/hhh/learning_space/ros2_workspaces/ros2_ws/src/bottle_grasp/bottle_grasp/images/realsense_color_image.png',h_low=35.0, h_high=85.0)
+                mask_array = np.array(mask_array)
+            if(self.num == 2):
+                _,mask_array = image_processor('/home/hhh/learning_space/ros2_workspaces/ros2_ws/src/bottle_grasp/bottle_grasp/images/realsense_color_image.png',h_low=100, h_high=140.0)
+                mask_array = np.array(mask_array)
+            if(self.num == 3):
+                masks = get_mask('/home/hhh/learning_space/ros2_workspaces/ros2_ws/src/bottle_grasp/bottle_grasp/images', 'bottle')
+                mask_array = np.array(masks[0][0])
+                mask_array = (mask_array * 255).astype(np.uint8)
             print(mask_array)
             self.get_logger().info("get_mask")
             depth_frame = cv2.imread('/home/hhh/learning_space/ros2_workspaces/ros2_ws/src/bottle_grasp/bottle_grasp/realsense_depth_image.png', cv2.IMREAD_UNCHANGED)
@@ -214,7 +234,7 @@ class GraspDemoPub(Node):
             movej_p_target2.pose.orientation.y = self.above_object_pose[4]
             movej_p_target2.pose.orientation.z = self.above_object_pose[5]
             movej_p_target2.pose.orientation.w = self.above_object_pose[6]
-            movej_p_target2.speed = 5
+            movej_p_target2.speed = 10
             movej_p_target2.block = True
             self.movej_p_publisher_.publish(movej_p_target2)
 
@@ -233,7 +253,7 @@ class GraspDemoPub(Node):
             movej_p_target3.pose.orientation.y = self.correct_angle_pose[4]
             movej_p_target3.pose.orientation.z = self.correct_angle_pose[5]
             movej_p_target3.pose.orientation.w = self.correct_angle_pose[6]
-            movej_p_target3.speed = 5
+            movej_p_target3.speed = 10
             movej_p_target3.block = True
             self.movej_p_publisher_.publish(movej_p_target3)
             self.above_object_state = False
@@ -251,7 +271,7 @@ class GraspDemoPub(Node):
             movej_p_target4.pose.orientation.y = self.finally_pose[4]
             movej_p_target4.pose.orientation.z = self.finally_pose[5]
             movej_p_target4.pose.orientation.w = self.finally_pose[6]
-            movej_p_target4.speed = 5
+            movej_p_target4.speed = 10
             movej_p_target4.block = True
             self.movej_p_publisher_.publish(movej_p_target4)
             self.correct_angle_state = False
@@ -272,33 +292,53 @@ class GraspDemoPub(Node):
             self.get_logger().info("Step8: 移动到目标物体位置")
             self.movejp5 = True
             movej_p_target5 = Movejp()
-            movej_p_target5.pose.position.x = self.above_object_pose[0]
-            movej_p_target5.pose.position.y = self.above_object_pose[1]+0.1
-            movej_p_target5.pose.position.z = self.above_object_pose[2]
-            movej_p_target5.pose.orientation.x = self.above_object_pose[3]
-            movej_p_target5.pose.orientation.y = self.above_object_pose[4]
-            movej_p_target5.pose.orientation.z = self.above_object_pose[5]
-            movej_p_target5.pose.orientation.w = self.above_object_pose[6]
-            movej_p_target5.speed = 5
+            movej_p_target5.pose.position.x = -0.18
+            movej_p_target5.pose.position.y = 0.0
+            movej_p_target5.pose.position.z = 0.45
+            movej_p_target5.pose.orientation.x = 1.0
+            movej_p_target5.pose.orientation.y = 0.0
+            movej_p_target5.pose.orientation.z = 0.0
+            movej_p_target5.pose.orientation.w = 0.0
+            movej_p_target5.speed = 10
             movej_p_target5.block = True
             self.movej_p_publisher_.publish(movej_p_target5)
             self.close_jaw_state = False
             time.sleep(1)
+
+        if self.move_away_state1: # Step9: 移动到目标物体放置位置
+            self.get_logger().info("Step9: 移动到目标物体位置")
+            self.movejp6 = True
+            movej_p_target6 = Movejp()
+            movej_p_target6.pose.position.x = -0.270
+            movej_p_target6.pose.position.y = -0.315
+            movej_p_target6.pose.position.z = 0.510
+            movej_p_target6.pose.orientation.x = 0.730
+            movej_p_target6.pose.orientation.y = 0.370
+            movej_p_target6.pose.orientation.z = -0.498
+            movej_p_target6.pose.orientation.w = 0.285
+            movej_p_target6.speed = 10
+            movej_p_target6.block = True
+            self.movej_p_publisher_.publish(movej_p_target6)
+            self.move_away_state1 = False
+            time.sleep(1)
         
-        if self.move_away_state:  #Step9: 松开夹爪
-            self.get_logger().info("Step9: 松开夹爪")
+        if self.move_away_state2:  #Step10: 松开夹爪
+            self.get_logger().info("Step10: 松开夹爪")
             self.open_jaw_msg = Gripperset()
             self.open_jaw_msg.position = 1000
             self.open_jaw_msg.block = True
             self.open_jaw_publisher.publish(self.open_jaw_msg)
-            self.move_away_state = False
+            self.move_away_state2 = False
             time.sleep(1)
             self.open_jaw_state = True
 
-        if self.open_jaw_state: #Step10: 完成
-            self.get_logger().info("Step10: 完成")
+        if self.open_jaw_state: #Step11: 完成
+            self.get_logger().info("Step11: 完成")
             self.open_jaw_state = False
+            self.num +=1
             time.sleep(1)
+            if self.num != 4:
+                self.first_run = True
 
 def main(args=None):
     rclpy.init(args=args)
@@ -319,4 +359,4 @@ def main(args=None):
 
 
 if __name__ == "__main__":
-    main()
+    main()    

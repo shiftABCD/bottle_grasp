@@ -1,4 +1,6 @@
 from setuptools import find_packages, setup
+import os
+from glob import glob
 
 package_name = 'bottle_grasp'
 
@@ -10,6 +12,8 @@ setup(
         ('share/ament_index/resource_index/packages',
             ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
+        (os.path.join('share', package_name, 'launch'), glob('launch/*.launch.py')),
+        (os.path.join('share', package_name, 'config'), glob('config/*.yaml')),
     ],
     install_requires=['setuptools'],
     zip_safe=True,
@@ -21,6 +25,7 @@ setup(
     entry_points={
         'console_scripts': [
             "Grasp_demo_pub_node = bottle_grasp.main_grasp:main",
+            "dope_node = bottle_grasp.dope_node_1:main",
         ],
     },
 )
