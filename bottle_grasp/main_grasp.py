@@ -146,12 +146,12 @@ class GraspDemoPub(Node):
             movej_p_target1 = Movejp()
             movej_p_target1.pose.position.x = -0.18
             movej_p_target1.pose.position.y = 0.0
-            movej_p_target1.pose.position.z = 0.45
+            movej_p_target1.pose.position.z = 0.48
             movej_p_target1.pose.orientation.x = 1.0
             movej_p_target1.pose.orientation.y = 0.0
             movej_p_target1.pose.orientation.z = 0.0
             movej_p_target1.pose.orientation.w = 0.0
-            movej_p_target1.speed = 10
+            movej_p_target1.speed = 20
             movej_p_target1.block = True
             self.movej_p_publisher_.publish(movej_p_target1)
             
@@ -173,16 +173,30 @@ class GraspDemoPub(Node):
 
         if self.saveimg_state:  # Step3: 获取目标物 mask 并计算位置
             self.get_logger().info("Step3: 获取目标物 mask 并计算位置")
-            if(self.num == 0):
+            if(self.num == 6):
                 _,mask_array = image_processor('/home/hhh/learning_space/ros2_workspaces/ros2_ws/src/bottle_grasp/bottle_grasp/images/realsense_color_image.png')
                 mask_array = np.array(mask_array)
             if(self.num == 1):
-                _,mask_array = image_processor('/home/hhh/learning_space/ros2_workspaces/ros2_ws/src/bottle_grasp/bottle_grasp/images/realsense_color_image.png',h_low=35.0, h_high=85.0)
+                _,mask_array = image_processor('/home/hhh/learning_space/ros2_workspaces/ros2_ws/src/bottle_grasp/bottle_grasp/images/realsense_color_image.png')
                 mask_array = np.array(mask_array)
             if(self.num == 2):
-                _,mask_array = image_processor('/home/hhh/learning_space/ros2_workspaces/ros2_ws/src/bottle_grasp/bottle_grasp/images/realsense_color_image.png',h_low=100, h_high=140.0)
+                _,mask_array = image_processor('/home/hhh/learning_space/ros2_workspaces/ros2_ws/src/bottle_grasp/bottle_grasp/images/realsense_color_image.png',h_low=0.0, h_high=25.0)
                 mask_array = np.array(mask_array)
             if(self.num == 3):
+                _,mask_array = image_processor('/home/hhh/learning_space/ros2_workspaces/ros2_ws/src/bottle_grasp/bottle_grasp/images/realsense_color_image.png',h_low=35.0, h_high=85.0)
+                mask_array = np.array(mask_array)
+            if(self.num == 4):
+                _,mask_array = image_processor('/home/hhh/learning_space/ros2_workspaces/ros2_ws/src/bottle_grasp/bottle_grasp/images/realsense_color_image.png',h_low=0.0, h_high=25.0)
+                mask_array = np.array(mask_array)
+            if(self.num == 5):
+                masks = get_mask('/home/hhh/learning_space/ros2_workspaces/ros2_ws/src/bottle_grasp/bottle_grasp/images', 'mouse')
+                mask_array = np.array(masks[0][0])
+                mask_array = (mask_array * 255).astype(np.uint8)
+            if(self.num == 0):
+                masks = get_mask('/home/hhh/learning_space/ros2_workspaces/ros2_ws/src/bottle_grasp/bottle_grasp/images', 'remote')
+                mask_array = np.array(masks[0][0])
+                mask_array = (mask_array * 255).astype(np.uint8)
+            if(self.num == 7):
                 masks = get_mask('/home/hhh/learning_space/ros2_workspaces/ros2_ws/src/bottle_grasp/bottle_grasp/images', 'bottle')
                 mask_array = np.array(masks[0][0])
                 mask_array = (mask_array * 255).astype(np.uint8)
@@ -196,10 +210,10 @@ class GraspDemoPub(Node):
             arm_gripper_length = 150.0
             vertical_rx_ry_rz = [3.14, 0, 0]
             # 手眼标定结果
-            rotation_matrix = [[ 0.03620715,  0.99924033, -0.01441568],
-                               [-0.9991173,   0.0365026,   0.02078883],
-                               [ 0.02129925,  0.01365025,  0.99967996]]
-            translation_vector =[-0.10298245, 0.03366391, 0.03288961]
+            rotation_matrix =   [[ 0.01075026,  0.99986702 , 0.01226262],
+                                 [-0.99993978,  0.01077647, -0.00207295],
+                                 [-0.00220482, -0.0122396,   0.99992266]]
+            translation_vector =[-0.09996767, 0.03317858, 0.01842796]
 
             # self.above_object_pose, self.correct_angle_pose, self.finally_pose = vertical_catch(
             #     mask_array, depth_frame, color_intr, self.current_arm_state, arm_gripper_length,
@@ -234,7 +248,7 @@ class GraspDemoPub(Node):
             movej_p_target2.pose.orientation.y = self.above_object_pose[4]
             movej_p_target2.pose.orientation.z = self.above_object_pose[5]
             movej_p_target2.pose.orientation.w = self.above_object_pose[6]
-            movej_p_target2.speed = 10
+            movej_p_target2.speed = 20
             movej_p_target2.block = True
             self.movej_p_publisher_.publish(movej_p_target2)
 
@@ -253,7 +267,7 @@ class GraspDemoPub(Node):
             movej_p_target3.pose.orientation.y = self.correct_angle_pose[4]
             movej_p_target3.pose.orientation.z = self.correct_angle_pose[5]
             movej_p_target3.pose.orientation.w = self.correct_angle_pose[6]
-            movej_p_target3.speed = 10
+            movej_p_target3.speed = 20
             movej_p_target3.block = True
             self.movej_p_publisher_.publish(movej_p_target3)
             self.above_object_state = False
@@ -271,7 +285,7 @@ class GraspDemoPub(Node):
             movej_p_target4.pose.orientation.y = self.finally_pose[4]
             movej_p_target4.pose.orientation.z = self.finally_pose[5]
             movej_p_target4.pose.orientation.w = self.finally_pose[6]
-            movej_p_target4.speed = 10
+            movej_p_target4.speed = 20
             movej_p_target4.block = True
             self.movej_p_publisher_.publish(movej_p_target4)
             self.correct_angle_state = False
@@ -299,7 +313,7 @@ class GraspDemoPub(Node):
             movej_p_target5.pose.orientation.y = 0.0
             movej_p_target5.pose.orientation.z = 0.0
             movej_p_target5.pose.orientation.w = 0.0
-            movej_p_target5.speed = 10
+            movej_p_target5.speed = 20
             movej_p_target5.block = True
             self.movej_p_publisher_.publish(movej_p_target5)
             self.close_jaw_state = False
@@ -309,14 +323,14 @@ class GraspDemoPub(Node):
             self.get_logger().info("Step9: 移动到目标物体位置")
             self.movejp6 = True
             movej_p_target6 = Movejp()
-            movej_p_target6.pose.position.x = -0.270
-            movej_p_target6.pose.position.y = -0.315
-            movej_p_target6.pose.position.z = 0.510
-            movej_p_target6.pose.orientation.x = 0.730
-            movej_p_target6.pose.orientation.y = 0.370
-            movej_p_target6.pose.orientation.z = -0.498
-            movej_p_target6.pose.orientation.w = 0.285
-            movej_p_target6.speed = 10
+            movej_p_target6.pose.position.x = -0.280
+            movej_p_target6.pose.position.y = 0.310
+            movej_p_target6.pose.position.z = 0.450
+            movej_p_target6.pose.orientation.x = 0.751
+            movej_p_target6.pose.orientation.y = -0.370
+            movej_p_target6.pose.orientation.z = -0.504
+            movej_p_target6.pose.orientation.w = -0.212
+            movej_p_target6.speed = 20
             movej_p_target6.block = True
             self.movej_p_publisher_.publish(movej_p_target6)
             self.move_away_state1 = False
@@ -337,7 +351,7 @@ class GraspDemoPub(Node):
             self.open_jaw_state = False
             self.num +=1
             time.sleep(1)
-            if self.num != 4:
+            if self.num != 8:
                 self.first_run = True
 
 def main(args=None):

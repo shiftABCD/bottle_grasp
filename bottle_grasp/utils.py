@@ -130,13 +130,10 @@ def image_processor(image_path, h_low=15.0, h_high=40.0, s_low=100.0, s_high=255
     upper_yellow = np.array([h_high, s_high, v_high])
 
     # 创建黄色区域的掩码
-    mask = cv2.inRange(hsv, lower_yellow, upper_yellow)
-
-    # 对原图进行掩码操作，只保留黄色部分
-    yellow_only = cv2.bitwise_and(image, image, mask=mask)
+    yellow_mask = cv2.inRange(hsv, lower_yellow, upper_yellow)
 
     # 寻找轮廓
-    contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    contours, _ = cv2.findContours(yellow_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
     # 存储所有符合条件的轮廓
     valid_contours = [contour for contour in contours if cv2.contourArea(contour) > min_area]
@@ -144,18 +141,21 @@ def image_processor(image_path, h_low=15.0, h_high=40.0, s_low=100.0, s_high=255
     # 如果存在符合条件的轮廓，选择面积最大的那个
     if valid_contours:
         max_contour = max(valid_contours, key=cv2.contourArea)
-        x, y, w, h = cv2.boundingRect(max_contour)
-        area = w * h
-        # 计算中心点
-        center_x = x + w // 2
-        center_y = y + h // 2
+        # 创建一个最大轮廓的掩码
+        max_contour_mask = np.zeros_like(yellow_mask)
+        cv2.drawContours(max_contour_mask, [max_contour], -1, 255, thickness=cv2.FILLED)
 
+        # 最大轮廓的黄色区域掩码 = 黄色掩码 & 最大轮廓掩码
+        max_contour_yellow_mask = cv2.bitwise_and(yellow_mask, max_contour_mask)
+        
         # 在图像上绘制矩形框
+        x, y, w, h = cv2.boundingRect(max_contour)
         cv2.rectangle(image, (x, y), (x + w, y + h), (0, 255, 0), 2)
+        cv2.putText(image, f"{w}x{h}", (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
 
         # 在框旁边标注当前的像素大小
         text = f"Size: {w}x{h}"
         cv2.putText(image, text, (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
 
     # 返回处理后的图像
-    return image,mask
+    return image,max_contour_yellow_mask
